@@ -16,7 +16,7 @@ const limiter = rateLimit({
 app.use(morgan("combined"));
 app.use(limiter);
 
-app.use('/bookingRequest', async (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     try {
         const response = await axios.get('http://localhost:3001/api/v1/isAuthenticated', {
             headers: {
@@ -32,9 +32,22 @@ app.use('/bookingRequest', async (req, res, next) => {
             message: 'Unautherized',
         })
     }
-});
+};
 
-app.use('/bookingRequest', createProxyMiddleware({
+//Connecting the FlightBookingAndSearch Service
+app.use('/flightAndSearchService', createProxyMiddleware({
+    target: 'http://localhost:3000/flightAndSearchService',
+    changeOrigin: true
+}));
+
+//Connecting the Auth service
+app.use('/authService', createProxyMiddleware({
+    target: 'http://localhost:3001/authService',
+    changeOrigin: true,
+}));
+
+//Connecting the Flight Booking service
+app.use('/bookingRequest', authMiddleware, createProxyMiddleware({
     target: 'http://localhost:3002/bookingRequest',
     changeOrigin: true
 }));
